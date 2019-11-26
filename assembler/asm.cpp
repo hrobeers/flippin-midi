@@ -11,7 +11,7 @@ void fatal(const char* msg) {
   exit(EXIT_FAILURE);
 }
 
-uint_fast64_t parse(const char* str) {
+size_t parse(const char* str) {
   char *end;
   switch (str[0]) {
   case '$':
@@ -24,44 +24,39 @@ uint_fast64_t parse(const char* str) {
 }
 
 
-// Input ports
-#define WORD_PORT_IN  0b000000000111
-#define SIGN_PORT_IN  0b000000111000
-#define TRIG_PORT_IN  0b000011000000
-#define SCALE_PORT_IN 0b111100000000
-#define WORD(PORTS)  PORTS.PORT.A
-#define SIGN(PORTS)  PORTS.PORT.B
-#define TRIG(PORTS)  PORTS.PORT.C
-#define SCALE(PORTS) PORTS.PORT.D
+// Port widths
+const int WORD_WIDTH  = 3;
+const int SIGN_WIDTH  = 3;
+const int TRIG_WIDTH  = 2;
+const int SCALE_WIDTH = 4;
+const int MIDI_WIDTH  = 4;
+const int SCLCK_WIDTH = 1;
 
-typedef ports<
-  WIDTH<WORD_PORT_IN>(),
-  WIDTH<SIGN_PORT_IN>(),
-  WIDTH<TRIG_PORT_IN>(),
-  WIDTH<SCALE_PORT_IN>()> IN;
+// Input ports
+#define WORD(PORTS)  PORTS.A
+#define SIGN(PORTS)  PORTS.B
+#define TRIG(PORTS)  PORTS.C
+#define SCALE(PORTS) PORTS.D
+
+typedef ports_t<WORD_WIDTH, SIGN_WIDTH, TRIG_WIDTH, SCALE_WIDTH> IN;
 
 // Output ports
-#define MIDI_PORT_OUT  0b00001111
-#define SIGN_PORT_OUT  0b01110000
-#define SCLCK_PORT_OUT 0b10000000
-#define MIDI(PORTS)  PORTS.PORT.A
-//#define SIGN(PORTS)  PORTS.PORT.B
-#define SCLCK(PORTS)  PORTS.PORT.C
+#define MIDI(PORTS)  PORTS.A
+//#define SIGN(PORTS)  PORTS.B
+#define SCLCK(PORTS)  PORTS.C
 
-typedef ports<
-  WIDTH<MIDI_PORT_OUT>(),
-  WIDTH<SIGN_PORT_OUT>(),
-  WIDTH<SCLCK_PORT_OUT>()> OUT;
+typedef ports_t<MIDI_WIDTH, SIGN_WIDTH, SCLCK_WIDTH> OUT;
 
 // TIGGERS
-#define HI 0b01
-#define LO 0b10
+const unsigned HI = 0b01;
+const unsigned LO = 0b10;
 
 int main(int argc, char* argv[]) {
   // TODO parse rom size
-  size_t rom_size = std::pow(2,16);
+  size_t rom_size = pow<14>(2);
   std::vector<OUT> ROM(rom_size);
   std::string word;
+  size_t value = 0;
 
   IN input;
 
@@ -70,36 +65,38 @@ int main(int argc, char* argv[]) {
 
     case chash("scale"):
       std::cin >> word;
-      SCALE(input) = parse(word.c_str());
-      if (SCALE(input) & ~SHIFT<SCALE_PORT_IN>())
+      value = parse(word.c_str());
+      if (value > SCALE(input.port.limit))
         fatal("invalid scale argument");
+      SCALE(input.port) = value;
       break;
 
     case chash("sign"):
       std::cin >> word;
-      SIGN(input) = parse(word.c_str());
-      if (SIGN(input) & ~SHIFT<SIGN_PORT_IN>())
+      value = parse(word.c_str());
+      if (value > SIGN(input.port.limit))
         fatal("invalid sign argument");
+      SIGN(input.port) = value;
       break;
 
     case chash("hi"):
-      TRIG(input) = HI;
+      TRIG(input.port) = HI;
       break;
 
     case chash("lo"):
-      TRIG(input) = LO;
+      TRIG(input.port) = LO;
       break;
 
     case chash("noteon"):
-      std::cout << input.ADDR << std::endl;
-      SIGN(ROM[input.ADDR.to_ulong()]) = SIGN(input);
-      std::cout << ROM[input.ADDR.to_ulong()].ADDR << std::endl;
+      std::cout << input.addr << std::endl;
+      SIGN(ROM[input.addr.to_ulong()].port) = SIGN(input.port);
+      std::cout << ROM[input.addr.to_ulong()].addr << std::endl;
       break;
 
     case chash("noteoff"):
-      std::cout << input.ADDR << std::endl;
-      SIGN(ROM[input.ADDR.to_ulong()]) = SIGN(input);
-      std::cout << ROM[input.ADDR.to_ulong()].ADDR << std::endl;
+      std::cout << input.addr << std::endl;
+      SIGN(ROM[input.addr.to_ulong()].port) = SIGN(input.port);
+      std::cout << ROM[input.addr.to_ulong()].addr << std::endl;
       break;
 
     default:

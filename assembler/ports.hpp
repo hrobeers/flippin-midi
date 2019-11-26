@@ -20,26 +20,6 @@
 
 #include <bitset>
 
-template<int I>
-constexpr
-int not0() { return I; }
-template<>
-constexpr
-int not0<0>() { return 1; }
-
-template<int wA, int wB=0, int wC=0, int wD=0, int wE=0, int wF=0>
-union ports {
-  std::bitset<wA+wB+wC+wD+wE+wF> ADDR = 0;
-  struct {
-    unsigned A : wA;
-    unsigned B : not0<wB>();
-    unsigned C : not0<wC>();
-    unsigned D : not0<wD>();
-    unsigned E : not0<wE>();
-    unsigned F : not0<wF>();
-  } PORT;
-};
-
 
 // Compile time calculation of trailing zeros in binary
 template <uint64_t I>
@@ -76,5 +56,56 @@ uint8_t WIDTH<0>() {
 template<uint64_t I, typename T = int>
 constexpr
 T SHIFT() { return I >> LSHIFT_CNT<I>(); }
+
+template<int I>
+constexpr
+int not0() { return I; }
+template<>
+constexpr
+int not0<0>() { return 1; }
+
+template<int P>
+constexpr int pow(int base) { return pow<P-1>(base)*base; }
+template<>
+constexpr int pow<0>(int base) { return 1; }
+
+template<int wA, int wB, int wC, int wD, int wE, int wF>
+struct limits_t {
+  constexpr static unsigned A = pow<wA>(2)-1;
+  constexpr static unsigned B = pow<wB>(2)-1;
+  constexpr static unsigned C = pow<wC>(2)-1;
+  constexpr static unsigned D = pow<wD>(2)-1;
+  constexpr static unsigned E = pow<wE>(2)-1;
+  constexpr static unsigned F = pow<wF>(2)-1;
+};
+
+template<typename L, int wA, int wB, int wC, int wD, int wE, int wF>
+struct masks_t {
+  constexpr static unsigned A = L::A;
+  constexpr static unsigned B = L::B << USHIFT_CNT<A>();
+  constexpr static unsigned C = L::C << USHIFT_CNT<B>();
+  constexpr static unsigned D = L::D << USHIFT_CNT<C>();
+  constexpr static unsigned E = L::E << USHIFT_CNT<D>();
+  constexpr static unsigned F = L::F << USHIFT_CNT<E>();
+};
+
+template<int wA, int wB=0, int wC=0, int wD=0, int wE=0, int wF=0>
+union ports_t {
+  std::bitset<wA+wB+wC+wD+wE+wF> addr = 0;
+  struct ports {
+    unsigned A : wA;
+    unsigned B : not0<wB>();
+    unsigned C : not0<wC>();
+    unsigned D : not0<wD>();
+    unsigned E : not0<wE>();
+    unsigned F : not0<wF>();
+
+    typedef limits_t<wA,wB,wC,wD,wE,wF> limits;
+    typedef masks_t<limits,wA,wB,wC,wD,wE,wF> masks;
+
+    static limits limit;
+    static masks mask;
+  } port;
+};
 
 #endif // PORTS_HPP
