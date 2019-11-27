@@ -99,13 +99,19 @@ union ports_t {
     unsigned D : not0<wD>();
     unsigned E : not0<wE>();
     unsigned F : not0<wF>();
-
-    typedef limits_t<wA,wB,wC,wD,wE,wF> limits;
-    typedef masks_t<limits,wA,wB,wC,wD,wE,wF> masks;
-
-    static limits limit;
-    static masks mask;
   } port;
+
+  typedef limits_t<wA,wB,wC,wD,wE,wF> limits;
+  typedef masks_t<limits,wA,wB,wC,wD,wE,wF> masks;
+
+  const limits limit;
+  const masks mask;
 };
+
+#define PORT(name,port) \
+  template<typename T, typename Tval> \
+  void name(T& d, const Tval& val) { d.port = val; } \
+  template<typename T> \
+  unsigned name(const T& d) { return d.port; }
 
 #endif // PORTS_HPP

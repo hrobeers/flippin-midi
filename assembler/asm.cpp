@@ -33,17 +33,17 @@ const int MIDI_WIDTH  = 4;
 const int SCLCK_WIDTH = 1;
 
 // Input ports
-#define WORD(PORTS)  PORTS.A
-#define SIGN(PORTS)  PORTS.B
-#define TRIG(PORTS)  PORTS.C
-#define SCALE(PORTS) PORTS.D
+PORT(WORD,A)
+PORT(SIGN,B)
+PORT(TRIG,C)
+PORT(SCALE,D)
 
 typedef ports_t<WORD_WIDTH, SIGN_WIDTH, TRIG_WIDTH, SCALE_WIDTH> IN;
 
 // Output ports
-#define MIDI(PORTS)  PORTS.A
-//#define SIGN(PORTS)  PORTS.B
-#define SCLCK(PORTS)  PORTS.C
+PORT(MIDI,A)
+//PORT(SIGN,B) already declared
+PORT(SCLCK,C)
 
 typedef ports_t<MIDI_WIDTH, SIGN_WIDTH, SCLCK_WIDTH> OUT;
 
@@ -66,37 +66,35 @@ int main(int argc, char* argv[]) {
     case chash("scale"):
       std::cin >> word;
       value = parse(word.c_str());
-      if (value > SCALE(input.port.limit))
+      if (value > SCALE(input.limit))
         fatal("invalid scale argument");
-      SCALE(input.port) = value;
+      SCALE(input.port, value);
       break;
 
     case chash("sign"):
       std::cin >> word;
       value = parse(word.c_str());
-      if (value > SIGN(input.port.limit))
+      if (value > SIGN(input.limit))
         fatal("invalid sign argument");
-      SIGN(input.port) = value;
+      SIGN(input.port, value);
       break;
 
     case chash("hi"):
-      TRIG(input.port) = HI;
+      TRIG(input.port, HI);
       break;
 
     case chash("lo"):
-      TRIG(input.port) = LO;
+      TRIG(input.port, LO);
       break;
 
     case chash("noteon"):
-      std::cout << input.addr << std::endl;
-      SIGN(ROM[input.addr.to_ulong()].port) = SIGN(input.port);
-      std::cout << ROM[input.addr.to_ulong()].addr << std::endl;
+      SIGN(ROM[input.addr.to_ulong()].port, SIGN(input.port));
+      std::cout << input.addr << " -> "<< ROM[input.addr.to_ulong()].addr << std::endl;
       break;
 
     case chash("noteoff"):
-      std::cout << input.addr << std::endl;
-      SIGN(ROM[input.addr.to_ulong()].port) = SIGN(input.port);
-      std::cout << ROM[input.addr.to_ulong()].addr << std::endl;
+      SIGN(ROM[input.addr.to_ulong()].port, SIGN(input.port));
+      std::cout << input.addr << " -> "<< ROM[input.addr.to_ulong()].addr << std::endl;
       break;
 
     default:
