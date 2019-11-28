@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef CHASH_HPP
-#define CHASH_HPP
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
 namespace {
   constexpr
@@ -24,6 +24,23 @@ namespace {
     // space is first printable char
     return str[h]<' ' || str[h]==delim ? 5381 : (chash(str, delim, h+1)*33) ^ str[h];
   }
+
+  void fatal(const char* msg) {
+    std::cerr << msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  size_t parse(const char* str) {
+    char *end;
+    switch (str[0]) {
+    case '$':
+      return std::strtol(&str[1], &end, 16);
+    case 'b':
+      return std::strtol(&str[1], &end, 2);
+    default:
+      return std::strtol(str, &end, 10);
+    }
+  }
 }
 
-#endif // CHASH_HPP
+#endif // UTILS_HPP

@@ -3,25 +3,8 @@
 #include <vector>
 #include <cmath>
 
-#include "chash.hpp"
+#include "utils.hpp"
 #include "ports.hpp"
-
-void fatal(const char* msg) {
-  std::cerr << msg << std::endl;
-  exit(EXIT_FAILURE);
-}
-
-size_t parse(const char* str) {
-  char *end;
-  switch (str[0]) {
-  case '$':
-    return std::strtol(&str[1], &end, 16);
-  case 'b':
-    return std::strtol(&str[1], &end, 2);
-  default:
-    return std::strtol(str, &end, 10);
-  }
-}
 
 
 // Port widths
